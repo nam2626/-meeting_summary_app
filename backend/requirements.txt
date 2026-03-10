@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+python-multipart
+faster-whisper
+langchain
+langchain-openai
+notion-client
+python-dotenv
+alembic

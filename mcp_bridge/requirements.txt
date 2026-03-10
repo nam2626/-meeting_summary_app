@@ -1,0 +1,4 @@
+# mcp_bridge/requirements.txt
+mcp[cli]
+fastmcp
+python-dotenv

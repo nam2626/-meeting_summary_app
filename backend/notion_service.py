@@ -4,37 +4,68 @@ import re
 from notion_client import AsyncClient
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 class NotionService:
     def __init__(self):
-        self.notion = AsyncClient(auth=os.getenv("NOTION_API_KEY"))
+        api_key = os.getenv("NOTION_API_KEY")
+        self.notion = AsyncClient(auth=api_key)
         self.database_id = os.getenv("NOTION_DB_ID")
-        print(f"DEBUG: Using Database ID -> {self.database_id}") # 이 출력값이 로그의 ID와 일치하는지 확인
+        masked = f"{api_key[:10]}...{api_key[-5:]}" if api_key else "None"
+        print(f"DEBUG: NOTION_API_KEY -> {masked}")
+        print(f"DEBUG: NOTION_DB_ID   -> {self.database_id}")
 
-    async def create_kanban_card(self, title: str, status: str, assignee: str, deadline: str):
+    async def create_kanban_card(self, title: str, status: str, assignee: str, deadline: str, content: str = ""):
         """
-        노션 칸반 보드 형식:
-        이름 : 기본속성 (title)
-        상태 : 시작 전 / 진행 중 / 완료 (select)
-        담당자 : text (rich_text)
-        마감일 : date (date)
+        NEW_KANBAN DB 속성에 직접 매핑 + 본문에 상세 내용 추가:
+        - 이름   : title
+        - 담당자 : rich_text
+        - 날짜   : date
+        - 태그   : multi_select (상태 저장)
+        - 본문   : 상세 내용(content)
         """
         properties = {
             "이름": {"title": [{"text": {"content": title}}]},
-            "상태": {"select": {"name": status}},
-            "담당자": {"rich_text": [{"text": {"content": assignee if assignee != "None" else ""}}]}
+            "담당자": {"rich_text": [{"text": {"content": assignee if assignee != "None" else ""}}]},
+            "태그": {"multi_select": [{"name": status}]},
         }
 
-        # ISO 8601 형식(YYYY-MM-DD)인 경우에만 마감일 설정
-        # LLM이 "내일", "다음 주" 같은 자연어를 반환하면 무시
+        # 날짜 포맷 확인 후 매핑 (날짜 컬럼명: '날짜')
         if deadline and deadline != "None":
             if re.match(r"^\d{4}-\d{2}-\d{2}$", deadline.strip()):
-                properties["마감일"] = {"date": {"start": deadline.strip()}}
+                properties["날짜"] = {"date": {"start": deadline.strip()}}
+
+        # 본문 블록 구성
+        children = []
+        if content:
+            children.append({
+                "object": "block",
+                "type": "heading_3",
+                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "📝 상세 업무 내용"}}]}
+            })
+            children.append({
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {"rich_text": [{"type": "text", "text": {"content": content}}]}
+            })
+
+        # 기존 안내 callout도 유지 (선택사항)
+        children.append({
+            "object": "block",
+            "type": "callout",
+            "callout": {
+                "rich_text": [{"type": "text", "text": {"content":
+                    f"📋 상태: {status} | 👤 담당자: {assignee if assignee != 'None' else '미지정'} | 📅 마감일: {deadline if deadline != 'None' else '미정'}"
+                }}],
+                "icon": {"emoji": "📌"},
+                "color": "gray_background"
+            }
+        })
 
         response = await self.notion.pages.create(
             parent={"database_id": self.database_id},
-            properties=properties
+            properties=properties,
+            children=children
         )
         return response.get("id")
 

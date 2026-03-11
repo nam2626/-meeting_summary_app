@@ -128,6 +128,7 @@ async def analyze_text(
     results = []
     for t in extracted_tasks:
         title = t.get("title", "Unknown Task")
+        content = t.get("content", "")
         assignee = t.get("assignee", "None")
         deadline = t.get("deadline", "None")
 
@@ -135,7 +136,8 @@ async def analyze_text(
             title=title,
             status="시작 전",
             assignee=assignee,
-            deadline=deadline
+            deadline=deadline,
+            content=content
         )
 
         if meeting_id:

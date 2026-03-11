@@ -5,16 +5,17 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 class AgentService:
     def __init__(self):
-        self.llm = ChatOpenAI(temperature=0, model="gpt-4o")
+        self.llm = ChatOpenAI(temperature=0, model="gpt-5-nano")
 
         # 프롬프트 구성 - JSON 직접 반환 방식
         self.prompt = ChatPromptTemplate.from_template(
             "당신은 회의록에서 업무를 추출하는 전문 비서입니다.\n"
-            "다음 회의록 텍스트에서 '할 일(title)', '담당자(assignee)', '마감일(deadline)'을 추출하세요.\n"
+            "다음 회의록 텍스트에서 '할 일(title)', '상세 내용(content)', '담당자(assignee)', '마감일(deadline)'을 추출하세요.\n"
+            "상세 내용은 해당 업무에 대한 구체적인 설명이나 실행 지침을 1-2문장으로 작성하세요.\n"
             "담당자가 없으면 'None', 마감일이 없으면 'None'으로 기입하세요.\n"
             "마감일은 반드시 'YYYY-MM-DD' 형식(예: 2025-03-15)으로만 작성하세요. 오늘 날짜는 {today}입니다.\n"
             "'내일', '다음 주' 같은 자연어 표현은 실제 날짜로 변환하세요.\n"
@@ -22,8 +23,8 @@ class AgentService:
             "예시:\n"
             "```json\n"
             "[\n"
-            "  {{\"title\": \"기획서 작성\", \"assignee\": \"홍길동\", \"deadline\": \"2025-03-15\"}},\n"
-            "  {{\"title\": \"디자인 검토\", \"assignee\": \"None\", \"deadline\": \"None\"}}\n"
+            "  {{\"title\": \"기획서 작성\", \"content\": \"신규 프로젝트의 전반적인 방향성과 일정을 담은 기획서를 작성하여 공유함\", \"assignee\": \"홍길동\", \"deadline\": \"2025-03-15\"}},\n"
+            "  {{\"title\": \"디자인 검토\", \"content\": \"시안 A컬러와 B컬러의 대비를 확인하고 피드백을 전달함\", \"assignee\": \"None\", \"deadline\": \"None\"}}\n"
             "]\n"
             "```\n\n"
             "회의록 원문:\n{text}"

@@ -1,7 +1,7 @@
 # backend/database.py
-from sqlalchemy import create_all, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base
+from models import Base
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./meetings.db"
 

@@ -5,6 +5,9 @@ python-multipart
 faster-whisper
 langchain
 langchain-openai
+langchain-core
+langchain-community
 notion-client
 python-dotenv
 alembic
+torch
